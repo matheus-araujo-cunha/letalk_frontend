@@ -1,4 +1,4 @@
-import { Button, Flex, Text, VStack } from "@chakra-ui/react";
+import { Button, Flex, Text,  useToast,  VStack } from "@chakra-ui/react";
 import Input from "../Input";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
@@ -9,29 +9,38 @@ import { useLoan } from "../../hooks/LoanContext";
 const Form = () => {
   const { loan, installments, simulateLoan } = useLoan();
 
+  const toast = useToast()
+
   const simulateLoanSchema = yup.object().shape({
     cpf: yup
       .string()
-      // .matches(
-      //   "[0-9]{2}[.]?[0-9]{3}[.]?[0-9]{3}[/]?[0-9]{4}[-]?[0-9]{2})|([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}[-]?[0-9]{2}",
-      //   "CPF não está em um formato válido"
-      // )
+      .matches(
+        /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/,
+        "CPF não está em um formato válido"
+      )
       .required("O campo CPF é obrigatório"),
     uf: yup.string().required("O campo UF é obrigatório"),
     birthdate: yup
-      .date("Insira o campo com o formato de data YYYY-MM-DD")
-      // .matches(
-      //   /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/,
-      //   "Formato de data YYYY-MM-DD"
-      // )
+      .string("Insira o campo com o formato de data YYYY-MM-DD")
+      .matches(
+        /^\d{4}\/(0[1-9]|1[012])\/(0[1-9]|[12][0-9]|3[01])$/,
+        "Formato de data YYYY/MM/DD"
+      )
       .required("O campo de data de nascimento é obrigatório"),
     total: yup
-      .number()
+      .number("aaa")
+      .positive("Deve ser um número positivo")
+      .transform((value, originalValue) => {
+        return !!value ? value : 0
+      })
       .positive("Deve ser um número positivo")
       .min(50000, "Valor mínimo para empréstimo é de 50000")
       .required("O Campo de valor do empréstimo é obrigatório"),
     valueByMonth: yup
       .number("O campo requer um número")
+      .transform((value, originalValue) => {
+        return !!value ? value : 0
+      })
       .positive("Deve ser um número positivo")
       .required("O Campo de valor mensal é obrigatório"),
   });
@@ -45,8 +54,8 @@ const Form = () => {
   });
 
   const handleSimulateLoan = async (data) => {
-    simulateLoan(data);
-  };
+    simulateLoan(data)
+  }   
 
   return (
     <>
@@ -56,7 +65,8 @@ const Form = () => {
       <Flex
         as="form"
         bg="white"
-        w="65%"
+        w="72%"
+        minH="75vh"
         h="75vh"
         justify="center"
         align="center"
@@ -68,32 +78,32 @@ const Form = () => {
         <VStack spacing="5" w="90%">
           <Input
             placeholder="CPF"
-            name="oi"
+            name="cpf"
             error={errors.cpf}
             {...register("cpf")}
           ></Input>
           <Input
             placeholder="UF"
-            name="oi"
+            name="uf"
             error={errors.uf}
             {...register("uf")}
           ></Input>
           <Input
             placeholder="DATA DE NASCIMENTO"
-            name="oi"
+            name="birthdate"
             error={errors.birthdate}
             {...register("birthdate")}
           ></Input>
           <Input
             placeholder="QUAL O VALOR DO EMPRÉSTIMO"
-            name="oi"
-            type="number"
+            name="total"
+            // type="number"
             error={errors.total}
             {...register("total")}
           ></Input>
           <Input
             placeholder="QUAL VALOR DESEJA PAGAR POR MÊS?"
-            name="oi"
+            name="valueByMonth"
             type="number"
             error={errors.valueByMonth}
             {...register("valueByMonth")}
